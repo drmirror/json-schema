@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name":      { "type": "string" },
+    "createdAt": { "$ref": "#/$defs/dateTime" },
+    "amount":    { "$ref": "#/$defs/decimal" },
+    "active":    { "$ref": "#/$defs/booleanString" }
+  },
+  "$defs": {
+    "dateTime":      { "type": "string", "format": "date-time" },
+    "decimal":       { "type": "string", "format": "decimal" },
+    "booleanString": { "type": "string", "format": "boolean" }
+  }
+}

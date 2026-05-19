@@ -1,0 +1,83 @@
+{
+    "prop0" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop1" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop2" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop3" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop4" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop5" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop6" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop7" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop8" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    },
+    "prop9" : {
+        "value" : "abcdef",
+        "effectivePeriod" : {
+            "dateTimeBegin" : "2026-01-01T00:00:00Z",
+            "dateTimeEnd" : "2026-02-01T00:00:00Z",
+            "dateTimeAsOf" : "2026-05-18T08:12:00Z"
+        }
+    }
+}
+    

@@ -1,0 +1,6 @@
+{
+  "name": "Widget",
+  "createdAt": "2026-04-27T12:00:00Z",
+  "amount": { "$numberDecimal": "12345.6789" },
+  "active": "true"
+}

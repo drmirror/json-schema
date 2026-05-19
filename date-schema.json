@@ -1,0 +1,235 @@
+{
+    "type" : "object",
+    "properties" : {
+        "prop0" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop1" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop2" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop3" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop4" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop5" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop6" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop7" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop8" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        },
+        "prop9" : {
+            "type" : "object",
+            "attributes" : {
+                "value" : "string",
+                "effectivePeriod" : {
+                    "type" : "object",
+                    "properties" : {
+                        "dateTimeBegin" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeEnd" : {
+                            "type" : "string",
+                            "format" : "date"
+                        },
+                        "dateTimeAsOf" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
