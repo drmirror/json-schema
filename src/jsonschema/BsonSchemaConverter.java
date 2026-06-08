@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -79,8 +80,24 @@ public final class BsonSchemaConverter {
     private BsonSchemaConverter() {
     }
 
+    /** Default number of times each $ref is inlined on a single path before truncation. */
+    public static final int DEFAULT_MAX_REF_DEPTH = 3;
+
     public static JsonNode toBsonSchema(JsonNode schema) {
-        JsonNode result = new Walker(schema).walk(schema, new HashSet<>());
+        return toBsonSchema(schema, DEFAULT_MAX_REF_DEPTH);
+    }
+
+    /**
+     * Convert {@code schema} to BSON. {@code maxRefDepth} caps how many times a
+     * given $ref is inlined on a single root-to-leaf path; the next would-be
+     * expansion is replaced with {@code {}} (the empty schema, which matches
+     * any value). This lets recursive definitions terminate in a finite tree.
+     */
+    public static JsonNode toBsonSchema(JsonNode schema, int maxRefDepth) {
+        if (maxRefDepth < 0) {
+            throw new IllegalArgumentException("maxRefDepth must be >= 0, got " + maxRefDepth);
+        }
+        JsonNode result = new Walker(schema, maxRefDepth).walk(schema, new HashMap<>());
         if (result instanceof ObjectNode top) {
             injectIdForMongoInsert(top);
         }
@@ -134,24 +151,37 @@ public final class BsonSchemaConverter {
 
     private static final class Walker {
         private final JsonNode root;
+        private final int maxRefDepth;
+        private final Set<String> truncatedRefs = new HashSet<>();
 
-        Walker(JsonNode root) {
+        Walker(JsonNode root, int maxRefDepth) {
             this.root = root;
+            this.maxRefDepth = maxRefDepth;
         }
 
-        JsonNode walk(JsonNode node, Set<String> refStack) {
+        JsonNode walk(JsonNode node, Map<String, Integer> refDepth) {
             if (node == null) return null;
             if (!node.isObject()) return node.deepCopy(); // boolean schemas, etc.
 
             JsonNode refNode = node.get("$ref");
             if (refNode != null && refNode.isTextual()) {
                 String ref = refNode.asText();
-                if (refStack.contains(ref)) {
-                    throw new IllegalStateException("Cyclic $ref: " + ref);
+                int current = refDepth.getOrDefault(ref, 0);
+                JsonNode inlined;
+                if (current >= maxRefDepth) {
+                    // Recursion (or just deep $ref chain) reached the budget.
+                    // Emit {} — matches any value — so the document tree can terminate.
+                    if (truncatedRefs.add(ref)) {
+                        System.err.println("WARNING: cyclic $ref \"" + ref
+                                + "\" truncated after " + maxRefDepth
+                                + " level(s) of inlining; emitting empty schema {}");
+                    }
+                    inlined = MAPPER.createObjectNode();
+                } else {
+                    Map<String, Integer> next = new HashMap<>(refDepth);
+                    next.put(ref, current + 1);
+                    inlined = walk(resolveRef(ref), next);
                 }
-                Set<String> next = new HashSet<>(refStack);
-                next.add(ref);
-                JsonNode inlined = walk(resolveRef(ref), next);
 
                 // Sibling keywords next to $ref override / extend the inlined target.
                 if (node.size() > 1 && inlined.isObject()) {
@@ -159,7 +189,7 @@ public final class BsonSchemaConverter {
                     for (Map.Entry<String, JsonNode> e : node.properties()) {
                         String k = e.getKey();
                         if (k.equals("$ref") || DROP.contains(k)) continue;
-                        merged.set(k, walkValue(k, e.getValue(), refStack));
+                        merged.set(k, walkValue(k, e.getValue(), refDepth));
                     }
                     return merged;
                 }
@@ -202,7 +232,7 @@ public final class BsonSchemaConverter {
                     // "pattern" only constrains string instances; once the value is a
                     // Date / Decimal128 / Boolean it would never match anyway.
                     if (k.equals("type") || k.equals("pattern") || DROP.contains(k)) continue;
-                    result.set(k, walkValue(k, e.getValue(), refStack));
+                    result.set(k, walkValue(k, e.getValue(), refDepth));
                 }
                 return result;
             }
@@ -229,7 +259,7 @@ public final class BsonSchemaConverter {
                     // "pattern" only constrains string instances; once the value is a
                     // non-string BSON type (e.g. int) it would never match anyway.
                     if (k.equals("type") || k.equals("pattern") || DROP.contains(k)) continue;
-                    result.set(k, walkValue(k, e.getValue(), refStack));
+                    result.set(k, walkValue(k, e.getValue(), refDepth));
                 }
                 return result;
             }
@@ -241,7 +271,7 @@ public final class BsonSchemaConverter {
                     for (Map.Entry<String, JsonNode> e : node.properties()) {
                         String k = e.getKey();
                         if (DROP.contains(k)) continue; // drops "format"
-                        result.set(k, walkValue(k, e.getValue(), refStack));
+                        result.set(k, walkValue(k, e.getValue(), refDepth));
                     }
                     // Caller's own pattern wins; only inject if none was supplied.
                     if (!result.has("pattern")) {
@@ -255,21 +285,21 @@ public final class BsonSchemaConverter {
             for (Map.Entry<String, JsonNode> e : node.properties()) {
                 String k = e.getKey();
                 if (DROP.contains(k)) continue;
-                result.set(k, walkValue(k, e.getValue(), refStack));
+                result.set(k, walkValue(k, e.getValue(), refDepth));
             }
             return result;
         }
 
-        private JsonNode walkValue(String keyword, JsonNode value, Set<String> refStack) {
+        private JsonNode walkValue(String keyword, JsonNode value, Map<String, Integer> refDepth) {
             if (SUBSCHEMA_ARRAY.contains(keyword) && value.isArray()) {
                 ArrayNode arr = MAPPER.createArrayNode();
-                for (JsonNode item : value) arr.add(walk(item, refStack));
+                for (JsonNode item : value) arr.add(walk(item, refDepth));
                 return arr;
             }
             if (SUBSCHEMA_MAP.contains(keyword) && value.isObject()) {
                 ObjectNode obj = MAPPER.createObjectNode();
                 for (Map.Entry<String, JsonNode> e : value.properties()) {
-                    obj.set(e.getKey(), walk(e.getValue(), refStack));
+                    obj.set(e.getKey(), walk(e.getValue(), refDepth));
                 }
                 return obj;
             }
@@ -278,10 +308,10 @@ public final class BsonSchemaConverter {
                 if (value.isArray()) {
                     // Legacy "items" tuple form.
                     ArrayNode arr = MAPPER.createArrayNode();
-                    for (JsonNode item : value) arr.add(walk(item, refStack));
+                    for (JsonNode item : value) arr.add(walk(item, refDepth));
                     return arr;
                 }
-                return walk(value, refStack);
+                return walk(value, refDepth);
             }
             return value.deepCopy();
         }
