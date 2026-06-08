@@ -108,17 +108,21 @@ public final class JsonSchemaTypeConverter {
             if (!declaresType(typeNode, "string")) return WalkFlow.CONTINUE;
             if (formatNode == null || !formatNode.isTextual()) return WalkFlow.CONTINUE;
 
+            String format = formatNode.asText();
+            String value = dataNode.asText();
             Object converted;
             try {
-                converted = switch (formatNode.asText()) {
-                    case "date-time" -> parseDateTime(dataNode.asText());
-                    case "decimal"   -> new BigDecimal(dataNode.asText());
-                    case "boolean"   -> parseBoolean(dataNode.asText());
+                converted = switch (format) {
+                    case "date-time" -> parseDateTime(value);
+                    case "decimal"   -> new BigDecimal(value);
+                    case "boolean"   -> parseBoolean(value);
                     default          -> null;
                 };
             } catch (RuntimeException e) {
-                // Leave the original string in place when conversion fails.
-                return WalkFlow.CONTINUE;
+                throw new IllegalArgumentException(
+                        "cannot convert value \"" + value + "\" at "
+                                + walkEvent.getInstanceLocation()
+                                + " to format \"" + format + "\": " + e.getMessage(), e);
             }
 
             if (converted != null) {
