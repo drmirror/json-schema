@@ -11,7 +11,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <release>20</release>
+          <release>25</release>
         </configuration>
       </plugin>
       <plugin>
