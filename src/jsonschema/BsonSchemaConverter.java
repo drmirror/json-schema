@@ -25,6 +25,8 @@ import java.util.Set;
  *     inlined; the $defs / definitions blocks are dropped from the output.
  *   - Meta keywords ($schema, $id, $comment, $anchor, $dynamicAnchor) are
  *     dropped because MongoDB's $jsonSchema validator does not accept them.
+ *   - An empty "required": [] (legal since draft-06, rejected by MongoDB's
+ *     draft-04 based validator) is dropped; it constrains nothing.
  *
  * Only internal pointer-style $refs are supported. External $ref URIs throw.
  * Cyclic $ref chains throw — they cannot be inlined into a finite tree.
@@ -188,7 +190,7 @@ public final class BsonSchemaConverter {
                     ObjectNode merged = (ObjectNode) inlined.deepCopy();
                     for (Map.Entry<String, JsonNode> e : node.properties()) {
                         String k = e.getKey();
-                        if (k.equals("$ref") || DROP.contains(k)) continue;
+                        if (k.equals("$ref") || DROP.contains(k) || isEmptyRequired(k, e.getValue())) continue;
                         merged.set(k, walkValue(k, e.getValue(), refDepth));
                     }
                     return merged;
@@ -231,7 +233,8 @@ public final class BsonSchemaConverter {
                     String k = e.getKey();
                     // "pattern" only constrains string instances; once the value is a
                     // Date / Decimal128 / Boolean it would never match anyway.
-                    if (k.equals("type") || k.equals("pattern") || DROP.contains(k)) continue;
+                    if (k.equals("type") || k.equals("pattern") || DROP.contains(k)
+                            || isEmptyRequired(k, e.getValue())) continue;
                     result.set(k, walkValue(k, e.getValue(), refDepth));
                 }
                 return result;
@@ -258,7 +261,8 @@ public final class BsonSchemaConverter {
                     String k = e.getKey();
                     // "pattern" only constrains string instances; once the value is a
                     // non-string BSON type (e.g. int) it would never match anyway.
-                    if (k.equals("type") || k.equals("pattern") || DROP.contains(k)) continue;
+                    if (k.equals("type") || k.equals("pattern") || DROP.contains(k)
+                            || isEmptyRequired(k, e.getValue())) continue;
                     result.set(k, walkValue(k, e.getValue(), refDepth));
                 }
                 return result;
@@ -270,7 +274,7 @@ public final class BsonSchemaConverter {
                     ObjectNode result = MAPPER.createObjectNode();
                     for (Map.Entry<String, JsonNode> e : node.properties()) {
                         String k = e.getKey();
-                        if (DROP.contains(k)) continue; // drops "format"
+                        if (DROP.contains(k) || isEmptyRequired(k, e.getValue())) continue; // drops "format"
                         result.set(k, walkValue(k, e.getValue(), refDepth));
                     }
                     // Caller's own pattern wins; only inject if none was supplied.
@@ -284,10 +288,20 @@ public final class BsonSchemaConverter {
             ObjectNode result = MAPPER.createObjectNode();
             for (Map.Entry<String, JsonNode> e : node.properties()) {
                 String k = e.getKey();
-                if (DROP.contains(k)) continue;
+                if (DROP.contains(k) || isEmptyRequired(k, e.getValue())) continue;
                 result.set(k, walkValue(k, e.getValue(), refDepth));
             }
             return result;
+        }
+
+        /**
+         * JSON Schema (draft-06+) allows {@code "required": []}, meaning "nothing
+         * is required". MongoDB's $jsonSchema follows draft-04 and rejects an
+         * empty array at collection-creation time. Dropping the keyword is
+         * semantically identical, so we do that.
+         */
+        private static boolean isEmptyRequired(String keyword, JsonNode value) {
+            return keyword.equals("required") && value.isArray() && value.isEmpty();
         }
 
         private JsonNode walkValue(String keyword, JsonNode value, Map<String, Integer> refDepth) {
