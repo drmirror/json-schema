@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Converts a standard JSON schema to a MongoDB-flavoured BSON schema:
@@ -27,6 +29,10 @@ import java.util.Set;
  *     dropped because MongoDB's $jsonSchema validator does not accept them.
  *   - An empty "required": [] (legal since draft-06, rejected by MongoDB's
  *     draft-04 based validator) is dropped; it constrains nothing.
+ *   - A format field (date-time, date, decimal, boolean) whose "pattern"
+ *     admits the empty string, e.g. "^(\\d{4}-\\d{2}-\\d{2}|)$", is rejected.
+ *     Empty strings are never valid for format fields; absent values must be
+ *     declared as {"type": ["string", "null"], ...} and sent as null.
  *
  * Only internal pointer-style $refs are supported. External $ref URIs throw.
  * Cyclic $ref chains throw — they cannot be inlined into a finite tree.
@@ -217,6 +223,17 @@ public final class BsonSchemaConverter {
                                     + "but schema declares type " + typeNode);
                 }
             }
+            // Empty strings are never valid for a format field. A pattern with an
+            // empty branch would be silently dropped (bsonType branches) or would
+            // let "" into MongoDB (date branch), so make the conflict an error.
+            if (formatText != null
+                    && (FORMAT_TO_BSON_TYPE.containsKey(formatText) || FORMAT_TO_PATTERN.containsKey(formatText))
+                    && patternAdmitsEmpty(node)) {
+                throw new IllegalArgumentException(
+                        "format \"" + formatText + "\" field has a pattern that admits the empty string ("
+                                + node.get("pattern").asText() + "); empty strings are not supported for "
+                                + "format fields - declare \"type\": [\"string\", \"null\"] and send null instead");
+            }
 
             String bsonType = formatText != null ? FORMAT_TO_BSON_TYPE.get(formatText) : null;
             if (bsonType != null && isTypeOrTypeNullable(typeNode, "string")) {
@@ -367,6 +384,17 @@ public final class BsonSchemaConverter {
             else if (!"null".equals(s)) return false;
         }
         return hasName;
+    }
+
+    /** True iff the node carries a textual, compilable "pattern" that matches the empty string. */
+    private static boolean patternAdmitsEmpty(JsonNode node) {
+        JsonNode patternNode = node.get("pattern");
+        if (patternNode == null || !patternNode.isTextual()) return false;
+        try {
+            return Pattern.compile(patternNode.asText()).matcher("").matches();
+        } catch (PatternSyntaxException e) {
+            return false; // MongoDB will report the bad regex itself
+        }
     }
 
     /** True iff {@code typeNode} is an array that contains {@code name} as one of its values. */

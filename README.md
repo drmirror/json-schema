@@ -75,6 +75,32 @@ java jsonschema.BsonSchemaConverter <schema.json> [output.json]
 
 Pretty-prints the BSON schema to stdout, or writes it to the second-argument file (with a trailing newline so the file is well-formed).
 
+### Absent and empty values
+
+An absent value on a format field is expressed as **`null`**, declared in the
+schema as a nullable type:
+
+```json
+{ "type": ["string", "null"], "format": "date-time" }
+```
+
+This works for all four formats. The BSON schema becomes
+`{"bsonType": ["date", "null"]}` (or `["decimal", "null"]`, `["bool", "null"]`;
+for `date` the type array is kept and the strict `YYYY-MM-DD` pattern added),
+`JsonSchemaTypeConverter` leaves `null` untouched, and MongoDB stores a BSON null.
+
+**Empty strings are never accepted for format fields.** For `date-time`,
+`decimal` and `boolean` the `JsonSchemaTypeConverter` rejects `""` before the
+insert; for `date` the injected pattern rejects it in MongoDB.
+
+A regex with an empty branch on a format field, such as
+`{"type": "string", "format": "date", "pattern": "^(\\d{4}-\\d{2}-\\d{2}|)$"}`,
+is therefore a **conversion error**: `BsonSchemaConverter` throws an
+`IllegalArgumentException` asking for `["string", "null"]` instead. Without
+that check the empty branch would be silently dropped (the value becomes a
+non-string `bsonType`) or would let `""` into the collection. Empty branches
+on plain, format-less strings are untouched and work as written.
+
 ### `JsonSchemaTypeConverter`
 
 Walks a JSON document against its schema and, where the schema declares one of

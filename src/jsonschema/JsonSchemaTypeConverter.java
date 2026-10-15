@@ -119,10 +119,14 @@ public final class JsonSchemaTypeConverter {
                     default          -> null;
                 };
             } catch (RuntimeException e) {
+                String hint = value.isEmpty()
+                        ? " (empty strings are not supported for format fields; send null for an absent"
+                          + " value and declare \"type\": [\"string\", \"null\"] in the schema)"
+                        : "";
                 throw new IllegalArgumentException(
                         "cannot convert value \"" + value + "\" at "
                                 + walkEvent.getInstanceLocation()
-                                + " to format \"" + format + "\": " + e.getMessage(), e);
+                                + " to format \"" + format + "\": " + e.getMessage() + hint, e);
             }
 
             if (converted != null) {

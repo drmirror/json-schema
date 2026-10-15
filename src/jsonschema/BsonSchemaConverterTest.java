@@ -41,8 +41,51 @@ public final class BsonSchemaConverterTest {
                 "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"string\"}},\"required\":[\"a\"]}",
                 "/required", "[\"a\"]");
 
+        // --- nullable format fields: ["string","null"] is the absent-value convention
+        expectEquals("nullable date-time -> [date,null]",
+                field("{\"type\":[\"string\",\"null\"],\"format\":\"date-time\"}"),
+                "/properties/f", "{\"bsonType\":[\"date\",\"null\"]}");
+        expectEquals("nullable date keeps type, strict pattern",
+                field("{\"type\":[\"string\",\"null\"],\"format\":\"date\"}"),
+                "/properties/f", "{\"type\":[\"string\",\"null\"],\"pattern\":\"^\\\\d{4}-\\\\d{2}-\\\\d{2}$\"}");
+        expectEquals("nullable decimal -> [decimal,null]",
+                field("{\"type\":[\"string\",\"null\"],\"format\":\"decimal\"}"),
+                "/properties/f", "{\"bsonType\":[\"decimal\",\"null\"]}");
+
+        // --- empty regex branch on a format field is an error -------------
+        expectThrows("empty branch + date-time rejected",
+                field("{\"type\":\"string\",\"format\":\"date-time\",\"pattern\":\"^(\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z|)$\"}"));
+        expectThrows("empty branch + date rejected",
+                field("{\"type\":\"string\",\"format\":\"date\",\"pattern\":\"^(\\\\d{4}-\\\\d{2}-\\\\d{2}|)$\"}"));
+        expectThrows("optional-quantifier pattern + decimal rejected",
+                field("{\"type\":\"string\",\"format\":\"decimal\",\"pattern\":\"^\\\\d*$\"}"));
+
+        // --- unchanged behaviour around it --------------------------------
+        expectEquals("strict pattern + date-time -> date, pattern dropped",
+                field("{\"type\":\"string\",\"format\":\"date-time\",\"pattern\":\"^\\\\d{4}-\\\\d{2}-\\\\d{2}T.*Z$\"}"),
+                "/properties/f", "{\"bsonType\":\"date\"}");
+        expectEquals("empty branch on plain string passes through",
+                field("{\"type\":\"string\",\"pattern\":\"^([A-Z0-9]{11}|)$\"}"),
+                "/properties/f", "{\"type\":\"string\",\"pattern\":\"^([A-Z0-9]{11}|)$\"}");
+
         System.out.printf("%n%d passed, %d failed%n", passed, failed);
         if (failed > 0) System.exit(1);
+    }
+
+    /** Wraps a property subschema in an object schema under the name "f". */
+    private static String field(String subschemaJson) {
+        return "{\"type\":\"object\",\"properties\":{\"f\":" + subschemaJson + "}}";
+    }
+
+    private static void expectThrows(String label, String schemaJson) {
+        try {
+            BsonSchemaConverter.toBsonSchema(schemaJson);
+            fail("%-40s expected IllegalArgumentException but conversion succeeded", label);
+        } catch (IllegalArgumentException e) {
+            pass("%-40s rejected: %s", label, e.getMessage());
+        } catch (Exception e) {
+            fail("%-40s expected IllegalArgumentException, got %s: %s", label, e.getClass().getSimpleName(), e.getMessage());
+        }
     }
 
     private static void expectNoKey(String label, String schemaJson, String pointer) throws Exception {
