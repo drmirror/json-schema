@@ -15,9 +15,11 @@ import org.bson.json.JsonWriterSettings;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
- * End-to-end check: parse a JSON schema, convert it to a MongoDB BSON
+ * End-to-end check: parse a JSON schema, check it against the modelling
+ * guidelines (see {@link SchemaGuidelineChecker}), convert it to a MongoDB BSON
  * schema, install the result as a $jsonSchema validator on a fresh
  * collection, parse a sample EJSON document, upgrade its remaining string
  * fields to native Java types, then attempt to insert. MongoDB enforces
@@ -31,7 +33,7 @@ public class SchemaValidator {
     private static final String CONNECTION_STRING = "mongodb://localhost:27017";
     private static final String DB_NAME = "bson_schema_check";
     private static final String COLLECTION_NAME = "validation_target";
-    private static final Path BASE_DIR = Path.of("/Users/andre.spiegel/Downloads/cvs");
+    private static final Path BASE_DIR = Path.of("/Users/andrespiegel/Downloads/cvs/models");
 
     private static int currentStep = 0;
 
@@ -48,6 +50,16 @@ public class SchemaValidator {
         try (MongoClient client = MongoClients.create(CONNECTION_STRING)) {
             step("Reading and parsing JSON schema: " + schemaPath);
             JsonNode schema = mapper.readTree(schemaPath.toFile());
+
+            step("Checking schema against modelling guidelines");
+            List<SchemaGuidelineChecker.Violation> violations = SchemaGuidelineChecker.check(schema);
+            if (!violations.isEmpty()) {
+                failure(violations.size() + " guideline violation(s) in " + schemaPath);
+                for (SchemaGuidelineChecker.Violation v : violations) {
+                    System.err.println("  " + v);
+                }
+                System.exit(1);
+            }
 
             step("Converting JSON schema to BSON schema");
             JsonNode bsonSchema = BsonSchemaConverter.toBsonSchema(schema);

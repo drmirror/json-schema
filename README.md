@@ -151,16 +151,49 @@ java jsonschema.JsonSchemaDateTruncator <schema.json> <document.json>
 
 Prints the converted document as pretty JSON.
 
+### `SchemaGuidelineChecker`
+
+Schema-level checks against the CVS data-modelling guidelines, run on the
+standard JSON schema before any BSON translation (the translation itself is
+unchanged).
+
+- **Rule 1:** a field declaration must not carry both `format` and `pattern`.
+
+The walker covers `properties`, `patternProperties`, `additionalProperties`,
+`items` / `prefixItems`, `contains`, `allOf` / `anyOf` / `oneOf`, `not`,
+`if` / `then` / `else`, `dependentSchemas`, `propertyNames`, `$defs` and
+`definitions`. Data-carrying keywords (`enum`, `const`, `default`, `examples`)
+are not descended into. One error is reported per offending field, as its JSON
+pointer plus the message
+`both "format" and "pattern" are set; use one or the other (guideline rule 1)`.
+
+**API**
+
+```java
+List<SchemaGuidelineChecker.Violation> v = SchemaGuidelineChecker.check(schema);  // empty = clean
+```
+
+**CLI**
+
+```bash
+java jsonschema.SchemaGuidelineChecker <schema.json>
+```
+
+Prints `OK` or one line per violation, exit status 1 if any were found.
+`SchemaValidator` runs this check as its second step and stops with the same
+listing if the schema violates a rule.
+
 ### `SchemaValidator`
 
 End-to-end pipeline against a local MongoDB. Each step is logged as it runs:
 
 1. Parse the JSON schema.
-2. Convert it to a BSON schema via `BsonSchemaConverter`.
-3. Drop and recreate the collection `bson_schema_check.validation_target` on `mongodb://localhost:27017`, installing the BSON schema as a `$jsonSchema` validator.
-4. Read the sample document — parsed as **Extended JSON**, so EJSON syntax such as `{"$numberDecimal":"123.45"}` or `{"$oid":"…"}` is honoured.
-5. Run `JsonSchemaTypeConverter` to upgrade any remaining plain-string fields to native Java types.
-6. Insert the document, which triggers MongoDB's validator.
+2. Check it against the modelling guidelines via `SchemaGuidelineChecker`; stop with a per-field listing if it fails.
+3. Convert it to a BSON schema via `BsonSchemaConverter`.
+4. Drop and recreate the collection `bson_schema_check.validation_target` on `mongodb://localhost:27017`, installing the BSON schema as a `$jsonSchema` validator.
+5. Read the sample document — parsed as **Extended JSON**, so EJSON syntax such as `{"$numberDecimal":"123.45"}` or `{"$oid":"…"}` is honoured.
+6. Run `JsonSchemaTypeConverter` to upgrade any remaining plain-string fields to native Java types.
+7. Insert the document, which triggers MongoDB's validator.
 
 On success: `SUCCESS: document was accepted by the MongoDB validator.`. On
 rejection: a pretty-printed multi-line version of MongoDB's
