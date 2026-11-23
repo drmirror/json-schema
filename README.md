@@ -125,6 +125,31 @@ JsonSchemaTypeConverter.convert(document, schema);                       // muta
 Map<String,Object> doc = JsonSchemaTypeConverter.convertJson(docJson, schemaJson);
 ```
 
+#### Performance test
+
+`JsonSchemaTypeConverterPerfTest` measures what a `convert()` call costs and
+where the time goes, on a synthetic document (default 100 rows, 801 string
+values, a quarter each of date-times, decimals, booleans and plain text):
+
+1. **Full `convert()` per document**, with no formats in the schema (pure
+   walking, nothing converted) and then with each format switched on in turn.
+   The difference to the walk-only run is the cost the conversions add,
+   reported per converted value.
+2. **Stages of the walk-only call**, timed separately: building the JsonNode
+   shadow, creating the `JsonSchema` object, and walking (with a new schema
+   object per document, as `convert()` does, and with a reused one).
+3. **Raw parse cost** per value for date-time, decimal and boolean, with no
+   schema or walking involved, to show how much of the added cost is parsing
+   and how much is bookkeeping.
+
+```bash
+java -cp "$CP" jsonschema.JsonSchemaTypeConverterPerfTest [rows] [docsPerRound] [warmupRounds] [measuredRounds]
+```
+
+Takes about 6 seconds with the defaults. Scenarios within a part take turns
+round by round, and figures are medians, so runs are comparable; absolute
+numbers still depend on the machine and JDK.
+
 ### `JsonSchemaDateTruncator`
 
 Same walker pattern, applied to `{"type":"string","format":"date"}` fields:
